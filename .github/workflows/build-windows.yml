@@ -15,13 +15,20 @@ jobs:
         working-directory: RyzoriaUI-v1.0-update
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Check project
+        run: |
+          Write-Host "Current folder:"
+          Get-Location
+          Write-Host "Project files:"
+          Get-ChildItem
 
       - name: Restore
         run: dotnet restore RyzoriaUI.csproj
@@ -40,16 +47,32 @@ jobs:
       - name: Create ZIP
         shell: pwsh
         run: |
+          if (Test-Path "RyzoriaUI-Windows-x64.zip") {
+            Remove-Item "RyzoriaUI-Windows-x64.zip" -Force
+          }
+
           Compress-Archive `
-            -Path publish\* `
-            -DestinationPath RyzoriaUI-Windows-x64.zip `
+            -Path "publish\*" `
+            -DestinationPath "RyzoriaUI-Windows-x64.zip" `
             -Force
+
+          Write-Host "ZIP created:"
+          Get-Item "RyzoriaUI-Windows-x64.zip"
+
+      - name: Verify ZIP
+        shell: pwsh
+        run: |
+          if (!(Test-Path "RyzoriaUI-Windows-x64.zip")) {
+            Write-Error "ZIP tidak ditemukan!"
+            exit 1
+          }
+
+          Write-Host "ZIP berhasil dibuat."
+          Get-Item "RyzoriaUI-Windows-x64.zip"
 
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
         with:
           name: RyzoriaUI-Windows-x64
           path: RyzoriaUI-v1.0-update/RyzoriaUI-Windows-x64.zip
-
-          name: RyzoriaUI-Windows-x64
-          path: RyzoriaUI-v1.0-update/RyzoriaUI-Windows-x64.zip
+          if-no-files-found: error

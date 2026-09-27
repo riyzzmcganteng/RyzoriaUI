@@ -10,11 +10,15 @@ jobs:
   build:
     runs-on: windows-latest
 
+    defaults:
+      run:
+        working-directory: RyzoriaUI-v1.0-update
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -38,11 +42,11 @@ jobs:
         run: |
           Compress-Archive `
             -Path publish\* `
-            -DestinationPath RyzoriaUI-Windows-x64.zip `
+            -DestinationPath ..\RyzoriaUI-Windows-x64.zip `
             -Force
 
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
         with:
           name: RyzoriaUI-Windows-x64
-          path: RyzoriaUI-Windows-x64.zip
+          path: RyzoriaUI-v1.0-update/RyzoriaUI-Windows-x64.zip

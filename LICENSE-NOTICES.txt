@@ -1,0 +1,14 @@
+RYZORIAUI v1.7
+
+This project bundles third-party components at build time:
+
+1. Android SDK Platform-Tools / adb
+   Source: Google Android Developers
+   URL: https://developer.android.com/tools/releases/platform-tools
+
+2. scrcpy
+   Source: Genymobile
+   URL: https://github.com/Genymobile/scrcpy
+   License: Apache-2.0 (see the upstream distribution for the complete license and notices).
+
+Redistribute third-party files only under their applicable license terms and notices.

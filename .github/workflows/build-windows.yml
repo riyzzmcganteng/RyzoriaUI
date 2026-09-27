@@ -1,0 +1,46 @@
+name: RyzoriaUI v1.7 - Windows Single EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Prepare bundled ADB + scrcpy
+        shell: pwsh
+        run: .\scripts\PrepareTools.ps1
+      - name: Restore
+        run: dotnet restore RyzoriaUI.csproj
+      - name: Build
+        run: dotnet build RyzoriaUI.csproj --configuration Release --no-restore
+      - name: Publish single executable
+        run: >-
+          dotnet publish RyzoriaUI.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          --output publish
+      - name: Verify one-file output
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'publish\RyzoriaUI.exe')) { throw 'RyzoriaUI.exe was not produced.' }
+          $extra = Get-ChildItem publish -File | Where-Object { $_.Name -ne 'RyzoriaUI.exe' }
+          if ($extra.Count -gt 0) { throw 'Publish folder contains files other than RyzoriaUI.exe.' }
+          Get-Item publish\RyzoriaUI.exe | Format-List Name,Length,FullName
+      - name: Upload final EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RyzoriaUI-v1.7-single-exe
+          path: publish/RyzoriaUI.exe

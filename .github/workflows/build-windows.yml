@@ -42,11 +42,14 @@ jobs:
         run: |
           Compress-Archive `
             -Path publish\* `
-            -DestinationPath ..\RyzoriaUI-Windows-x64.zip `
+            -DestinationPath RyzoriaUI-Windows-x64.zip `
             -Force
 
       - name: Upload Windows Build
         uses: actions/upload-artifact@v4
         with:
+          name: RyzoriaUI-Windows-x64
+          path: RyzoriaUI-v1.0-update/RyzoriaUI-Windows-x64.zip
+
           name: RyzoriaUI-Windows-x64
           path: RyzoriaUI-v1.0-update/RyzoriaUI-Windows-x64.zip

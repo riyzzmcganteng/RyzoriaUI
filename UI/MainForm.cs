@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,7 @@ public sealed class MainForm : Form
         Array.Empty<AndroidDevice>();
 
     private string _page = "Dashboard";
+
     private System.Threading.Timer? _deviceTimer;
     private System.Windows.Forms.Timer? _clockTimer;
 
@@ -63,6 +65,7 @@ public sealed class MainForm : Form
         FormClosing += (_, _) =>
         {
             _deviceTimer?.Dispose();
+
             _clockTimer?.Stop();
             _clockTimer?.Dispose();
 
@@ -95,7 +98,9 @@ public sealed class MainForm : Form
             16
         );
 
+        brand.Cursor = Cursors.Hand;
         brand.Click += (_, _) => ShowDashboard();
+
         top.Controls.Add(brand);
 
         var search = TextBoxStyled(
@@ -128,6 +133,7 @@ public sealed class MainForm : Form
         };
 
         min.FlatAppearance.BorderSize = 0;
+
         min.Click += (_, _) =>
         {
             WindowState = FormWindowState.Minimized;
@@ -147,6 +153,7 @@ public sealed class MainForm : Form
         };
 
         max.FlatAppearance.BorderSize = 0;
+
         max.Click += (_, _) =>
         {
             WindowState =
@@ -169,7 +176,11 @@ public sealed class MainForm : Form
         };
 
         close.FlatAppearance.BorderSize = 0;
-        close.Click += (_, _) => Close();
+
+        close.Click += (_, _) =>
+        {
+            Close();
+        };
 
         top.Controls.Add(close);
 
@@ -200,8 +211,10 @@ public sealed class MainForm : Form
 
         foreach (var item in nav)
         {
-            var button = NavButton(item, y);
-            sidebar.Controls.Add(button);
+            sidebar.Controls.Add(
+                NavButton(item, y)
+            );
+
             y += 48;
         }
 
@@ -235,7 +248,9 @@ public sealed class MainForm : Form
 
         _clock.Location = new Point(Width - 120, 9);
         _clock.AutoSize = true;
-        _clock.Anchor = AnchorStyles.Right | AnchorStyles.Bottom;
+        _clock.Anchor =
+            AnchorStyles.Right |
+            AnchorStyles.Bottom;
 
         bottom.Controls.Add(_clock);
 
@@ -246,18 +261,24 @@ public sealed class MainForm : Form
 
         _clockTimer.Tick += (_, _) =>
         {
-            _clock.Text = DateTime.Now.ToString(
-                "HH:mm:ss  dd/MM/yyyy"
-            );
+            _clock.Text =
+                DateTime.Now.ToString(
+                    "HH:mm:ss  dd/MM/yyyy"
+                );
         };
 
         _clockTimer.Start();
 
-        _stats.Updated += () =>
-        {
-            if (IsDisposed || !IsHandleCreated)
-                return;
+        _stats.Updated += UpdateResourceLabel;
+    }
 
+    private void UpdateResourceLabel()
+    {
+        if (IsDisposed || !IsHandleCreated)
+            return;
+
+        try
+        {
             BeginInvoke(new Action(() =>
             {
                 if (IsDisposed)
@@ -266,10 +287,16 @@ public sealed class MainForm : Form
                 _resource.Text =
                     $"CPU {_stats.CpuPercent:0}%  •  App {_stats.AppMemoryMb:0} MB";
             }));
-        };
+        }
+        catch
+        {
+            // Form sedang ditutup.
+        }
     }
 
-    private Button NavButton(string text, int y)
+    private Button NavButton(
+        string text,
+        int y)
     {
         var button = new Button
         {
@@ -280,33 +307,72 @@ public sealed class MainForm : Form
             FlatStyle = FlatStyle.Flat,
             BackColor = Color.Transparent,
             ForeColor = Color.White,
-            Padding = new Padding(12, 0, 0, 0)
+            Padding = new Padding(12, 0, 0, 0),
+            Cursor = Cursors.Hand
         };
 
         button.FlatAppearance.BorderSize = 0;
 
         button.Click += (_, _) =>
         {
-            if (text.Contains("Home", StringComparison.OrdinalIgnoreCase))
+            if (text.Contains(
+                    "Home",
+                    StringComparison.OrdinalIgnoreCase))
+            {
                 ShowDashboard();
-            else if (text.Contains("Android", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Android",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowAndroid();
-            else if (text.Contains("File", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "File",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowFiles();
-            else if (text.Contains("Gaming", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Gaming",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowGaming();
-            else if (text.Contains("Mapper", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Mapper",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowMapper();
-            else if (text.Contains("Performance", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Performance",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowPerformance();
-            else if (text.Contains("Diagnostics", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Diagnostics",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowDiagnostics();
-            else if (text.Contains("Developer", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Developer",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowDeveloper();
-            else if (text.Contains("Settings", StringComparison.OrdinalIgnoreCase))
+            }
+            else if (text.Contains(
+                         "Settings",
+                         StringComparison.OrdinalIgnoreCase))
+            {
                 ShowSettings();
+            }
             else
+            {
                 ShowAbout();
+            }
         };
 
         return button;
@@ -378,10 +444,12 @@ public sealed class MainForm : Form
             Size = new Size(width, 38),
             FlatStyle = FlatStyle.Flat,
             BackColor = Color.FromArgb(20, 33, 55),
-            ForeColor = Color.White
+            ForeColor = Color.White,
+            Cursor = Cursors.Hand
         };
 
-        button.FlatAppearance.BorderColor = Primary;
+        button.FlatAppearance.BorderColor =
+            Primary;
 
         return button;
     }
@@ -389,6 +457,7 @@ public sealed class MainForm : Form
     private void ResetContent(string title)
     {
         _content.Controls.Clear();
+
         _page = title;
 
         _content.Controls.Add(
@@ -452,7 +521,10 @@ public sealed class MainForm : Form
             180
         );
 
-        start.Click += (_, _) => ShowAndroid();
+        start.Click += (_, _) =>
+        {
+            ShowAndroid();
+        };
 
         hero.Controls.Add(start);
 
@@ -464,7 +536,9 @@ public sealed class MainForm : Form
         );
 
         perf.Click += (_, _) =>
+        {
             ApplyPreset("Ultra Low");
+        };
 
         hero.Controls.Add(perf);
 
@@ -476,7 +550,9 @@ public sealed class MainForm : Form
         );
 
         reload.Click += async (_, _) =>
+        {
             await RefreshDevices();
+        };
 
         hero.Controls.Add(reload);
     }
@@ -504,11 +580,19 @@ public sealed class MainForm : Form
             )
         );
 
-        _deviceBox.Location = new Point(18, 48);
+        _deviceBox.Location =
+            new Point(18, 48);
+
         _deviceBox.Width = 420;
-        _deviceBox.BackColor = Color.FromArgb(24, 31, 43);
-        _deviceBox.ForeColor = Color.White;
-        _deviceBox.DropDownStyle = ComboBoxStyle.DropDownList;
+
+        _deviceBox.BackColor =
+            Color.FromArgb(24, 31, 43);
+
+        _deviceBox.ForeColor =
+            Color.White;
+
+        _deviceBox.DropDownStyle =
+            ComboBoxStyle.DropDownList;
 
         card.Controls.Add(_deviceBox);
 
@@ -520,7 +604,9 @@ public sealed class MainForm : Form
         );
 
         refresh.Click += async (_, _) =>
+        {
             await RefreshDevices();
+        };
 
         card.Controls.Add(refresh);
 
@@ -532,7 +618,9 @@ public sealed class MainForm : Form
         );
 
         mirror.Click += async (_, _) =>
+        {
             await StartMirror();
+        };
 
         card.Controls.Add(mirror);
 
@@ -544,7 +632,9 @@ public sealed class MainForm : Form
         );
 
         stop.Click += (_, _) =>
+        {
             _scrcpy.Stop();
+        };
 
         card.Controls.Add(stop);
 
@@ -571,9 +661,14 @@ public sealed class MainForm : Form
                 104
             );
 
+            var currentAction =
+                action.Action;
+
             button.Click += async (_, _) =>
             {
-                await DeviceAction(action.Action);
+                await DeviceAction(
+                    currentAction
+                );
             };
 
             card.Controls.Add(button);
@@ -595,7 +690,8 @@ public sealed class MainForm : Form
             10
         );
 
-        info.MaximumSize = new Size(730, 150);
+        info.MaximumSize =
+            new Size(730, 120);
 
         card.Controls.Add(info);
 
@@ -634,7 +730,9 @@ public sealed class MainForm : Form
         );
 
         shot.Click += async (_, _) =>
+        {
             await TakeScreenshot();
+        };
 
         card.Controls.Add(shot);
 
@@ -645,8 +743,32 @@ public sealed class MainForm : Form
             110
         );
 
+        /*
+         * RebootAsync mengembalikan Task<bool>,
+         * sedangkan DeviceAction membutuhkan
+         * Func<string, Task>.
+         *
+         * Jadi hasil bool kita tangani di sini.
+         */
         reboot.Click += async (_, _) =>
-            await DeviceAction(_adb.RebootAsync);
+        {
+            await DeviceAction(
+                async serial =>
+                {
+                    var success =
+                        await _adb.RebootAsync(
+                            serial
+                        );
+
+                    if (!success)
+                    {
+                        throw new Exception(
+                            "Android gagal melakukan reboot."
+                        );
+                    }
+                }
+            );
+        };
 
         card.Controls.Add(reboot);
     }
@@ -702,18 +824,22 @@ public sealed class MainForm : Form
 
             if (device is null)
             {
-                output.Text = "No device.";
+                output.Text =
+                    "No device.";
+
                 return;
             }
 
-            var remote = string.IsNullOrWhiteSpace(path.Text)
-                ? "/sdcard"
-                : path.Text.Trim();
+            var remote =
+                string.IsNullOrWhiteSpace(path.Text)
+                    ? "/sdcard"
+                    : path.Text.Trim();
 
-            output.Text = await _files.ListAsync(
-                device.Serial,
-                remote
-            );
+            output.Text =
+                await _files.ListAsync(
+                    device.Serial,
+                    remote
+                );
         };
 
         var pull = Btn(
@@ -730,18 +856,24 @@ public sealed class MainForm : Form
             if (device is null)
                 return;
 
-            using var dialog = new SaveFileDialog();
+            using var dialog =
+                new SaveFileDialog();
 
-            if (dialog.ShowDialog() != DialogResult.OK)
+            if (dialog.ShowDialog() !=
+                DialogResult.OK)
+            {
                 return;
+            }
 
-            var remote = path.Text.Trim();
+            var remote =
+                path.Text.Trim();
 
-            var success = await _files.PullAsync(
-                device.Serial,
-                remote,
-                dialog.FileName
-            );
+            var success =
+                await _files.PullAsync(
+                    device.Serial,
+                    remote,
+                    dialog.FileName
+                );
 
             MessageBox.Show(
                 success
@@ -766,18 +898,24 @@ public sealed class MainForm : Form
             if (device is null)
                 return;
 
-            using var dialog = new OpenFileDialog();
+            using var dialog =
+                new OpenFileDialog();
 
-            if (dialog.ShowDialog() != DialogResult.OK)
+            if (dialog.ShowDialog() !=
+                DialogResult.OK)
+            {
                 return;
+            }
 
-            var remote = path.Text.Trim();
+            var remote =
+                path.Text.Trim();
 
-            var success = await _files.PushAsync(
-                device.Serial,
-                dialog.FileName,
-                remote
-            );
+            var success =
+                await _files.PushAsync(
+                    device.Serial,
+                    dialog.FileName,
+                    remote
+                );
 
             MessageBox.Show(
                 success
@@ -813,12 +951,13 @@ public sealed class MainForm : Form
             var remotePath =
                 $"{path.Text.TrimEnd('/')}/{name}";
 
-            var success = await _files.ShellAsync(
-                device.Serial,
-                "mkdir",
-                "-p",
-                remotePath
-            );
+            var success =
+                await _files.ShellAsync(
+                    device.Serial,
+                    "mkdir",
+                    "-p",
+                    remotePath
+                );
 
             MessageBox.Show(
                 success
@@ -865,7 +1004,8 @@ public sealed class MainForm : Form
         {
             Location = new Point(18, 52),
             Width = 520,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            DropDownStyle =
+                ComboBoxStyle.DropDownList
         };
 
         combo.Items.AddRange(presets);
@@ -884,7 +1024,8 @@ public sealed class MainForm : Form
 
         var audio = new CheckBox
         {
-            Text = "No audio (recommended for N2040)",
+            Text =
+                "No audio (recommended for N2040)",
             Location = new Point(18, 126),
             AutoSize = true,
             Checked = true
@@ -901,7 +1042,8 @@ public sealed class MainForm : Form
 
         launch.Click += async (_, _) =>
         {
-            var device = SelectedDevice();
+            var device =
+                SelectedDevice();
 
             if (device is null)
             {
@@ -912,11 +1054,14 @@ public sealed class MainForm : Form
                 return;
             }
 
-            var presetIndex =
-                Math.Max(0, combo.SelectedIndex);
+            var index =
+                Math.Max(
+                    0,
+                    combo.SelectedIndex
+                );
 
             var preset =
-                presetIndex switch
+                index switch
                 {
                     0 => new PerformancePreset(
                         "Ultra Low",
@@ -982,14 +1127,17 @@ public sealed class MainForm : Form
             10
         );
 
-        note.MaximumSize = new Size(730, 80);
+        note.MaximumSize =
+            new Size(730, 80);
 
         card.Controls.Add(note);
     }
 
     private void ShowMapper()
     {
-        ResetContent("Universal Control Mapper");
+        ResetContent(
+            "Universal Control Mapper"
+        );
 
         var card = Card(
             10,
@@ -1010,17 +1158,21 @@ public sealed class MainForm : Form
             )
         );
 
-        var profiles = _settings.MapperProfiles;
+        var profiles =
+            _settings.MapperProfiles;
 
         var combo = new ComboBox
         {
             Location = new Point(18, 48),
             Width = 260,
-            DropDownStyle = ComboBoxStyle.DropDownList
+            DropDownStyle =
+                ComboBoxStyle.DropDownList
         };
 
         combo.Items.AddRange(
-            profiles.Select(p => p.Name).ToArray()
+            profiles.Select(
+                p => p.Name
+            ).ToArray()
         );
 
         if (combo.Items.Count > 0)
@@ -1032,7 +1184,8 @@ public sealed class MainForm : Form
         {
             Location = new Point(18, 92),
             Size = new Size(350, 220),
-            BackColor = Color.FromArgb(10, 15, 24),
+            BackColor =
+                Color.FromArgb(10, 15, 24),
             ForeColor = Color.White
         };
 
@@ -1045,17 +1198,20 @@ public sealed class MainForm : Form
             if (profiles.Count == 0)
                 return;
 
-            var index = Math.Max(
-                0,
-                combo.SelectedIndex
-            );
+            var index =
+                Math.Max(
+                    0,
+                    combo.SelectedIndex
+                );
 
             if (index >= profiles.Count)
                 index = 0;
 
-            var profile = profiles[index];
+            var profile =
+                profiles[index];
 
-            foreach (var binding in profile.Bindings)
+            foreach (var binding
+                     in profile.Bindings)
             {
                 list.Items.Add(
                     $"{binding.Key}  →  {binding.Value}"
@@ -1063,8 +1219,8 @@ public sealed class MainForm : Form
             }
         }
 
-        combo.SelectedIndexChanged += (_, _) =>
-            LoadProfile();
+        combo.SelectedIndexChanged +=
+            (_, _) => LoadProfile();
 
         LoadProfile();
 
@@ -1077,7 +1233,8 @@ public sealed class MainForm : Form
 
         test.Click += async (_, _) =>
         {
-            var device = SelectedDevice();
+            var device =
+                SelectedDevice();
 
             if (device is null ||
                 list.SelectedItem is null ||
@@ -1086,28 +1243,38 @@ public sealed class MainForm : Form
                 return;
             }
 
-            var key = list
-                .SelectedItem
-                .ToString()!
-                .Split('→')[0]
-                .Trim();
+            var key =
+                list.SelectedItem
+                    .ToString()!
+                    .Split('→')[0]
+                    .Trim();
 
-            var index = Math.Max(
-                0,
-                combo.SelectedIndex
-            );
+            var index =
+                Math.Max(
+                    0,
+                    combo.SelectedIndex
+                );
 
-            var profile = profiles[index];
+            var profile =
+                profiles[index];
 
             if (profile.Bindings.TryGetValue(
-                key,
-                out var binding))
+                    key,
+                    out var binding))
             {
-                await _mapper.SendBindingAsync(
-                    _adb,
-                    device.Serial,
-                    binding
-                );
+                var success =
+                    await _mapper.SendBindingAsync(
+                        _adb,
+                        device.Serial,
+                        binding
+                    );
+
+                if (!success)
+                {
+                    MessageBox.Show(
+                        "Binding gagal dikirim."
+                    );
+                }
             }
         };
 
@@ -1121,7 +1288,8 @@ public sealed class MainForm : Form
             10
         );
 
-        note.MaximumSize = new Size(330, 100);
+        note.MaximumSize =
+            new Size(330, 100);
 
         card.Controls.Add(note);
 
@@ -1134,7 +1302,9 @@ public sealed class MainForm : Form
 
         save.Click += (_, _) =>
         {
-            SettingsStore.Save(_settings);
+            SettingsStore.Save(
+                _settings
+            );
 
             MessageBox.Show(
                 "Mapper profiles saved."
@@ -1146,7 +1316,9 @@ public sealed class MainForm : Form
 
     private void ShowPerformance()
     {
-        ResetContent("Performance Manager");
+        ResetContent(
+            "Performance Manager"
+        );
 
         var modes =
             new[]
@@ -1186,9 +1358,12 @@ public sealed class MainForm : Form
                     current.Item4;
 
                 _settings.NoAudio =
-                    current.Item1 != "Performance";
+                    current.Item1 !=
+                    "Performance";
 
-                SettingsStore.Save(_settings);
+                SettingsStore.Save(
+                    _settings
+                );
 
                 MessageBox.Show(
                     $"Performance: {current.Item1}"
@@ -1206,14 +1381,17 @@ public sealed class MainForm : Form
             62
         );
 
-        info.MaximumSize = new Size(480, 80);
+        info.MaximumSize =
+            new Size(480, 80);
 
         _content.Controls.Add(info);
     }
 
     private async void ShowDiagnostics()
     {
-        ResetContent("Diagnostics Center");
+        ResetContent(
+            "Diagnostics Center"
+        );
 
         var card = Card(
             10,
@@ -1230,7 +1408,10 @@ public sealed class MainForm : Form
             Size = new Size(750, 300),
             BackColor = Color.Black,
             ForeColor = Color.LightGreen,
-            Font = new Font("Consolas", 10),
+            Font = new Font(
+                "Consolas",
+                10
+            ),
             ReadOnly = true
         };
 
@@ -1244,7 +1425,9 @@ public sealed class MainForm : Form
         );
 
         run.Click += async (_, _) =>
+        {
             await RunDiagnostics();
+        };
 
         card.Controls.Add(run);
 
@@ -1256,14 +1439,16 @@ public sealed class MainForm : Form
 
             try
             {
-                var result = await _diag.RunAsync();
+                var result =
+                    await _diag.RunAsync();
 
                 output.Text =
                     "RYZORIA DIAGNOSTICS\r\n\r\n" +
                     string.Join(
                         "\r\n",
                         result.Select(
-                            kv => $"{kv.Key,-20} {kv.Value}"
+                            kv =>
+                                $"{kv.Key,-20} {kv.Value}"
                         )
                     );
             }
@@ -1281,7 +1466,9 @@ public sealed class MainForm : Form
 
     private void ShowDeveloper()
     {
-        ResetContent("Developer Console");
+        ResetContent(
+            "Developer Console"
+        );
 
         var card = Card(
             10,
@@ -1307,7 +1494,10 @@ public sealed class MainForm : Form
             Size = new Size(770, 300),
             BackColor = Color.Black,
             ForeColor = Color.LightGreen,
-            Font = new Font("Consolas", 9),
+            Font = new Font(
+                "Consolas",
+                9
+            ),
             ReadOnly = true
         };
 
@@ -1320,7 +1510,8 @@ public sealed class MainForm : Form
 
             e.SuppressKeyPress = true;
 
-            var cmd = input.Text.Trim();
+            var cmd =
+                input.Text.Trim();
 
             input.Clear();
 
@@ -1362,7 +1553,8 @@ public sealed class MainForm : Form
                         var devices =
                             await _adb.GetDevicesAsync();
 
-                        foreach (var device in devices)
+                        foreach (var device
+                                 in devices)
                         {
                             output.AppendText(
                                 $"{device.Serial}\t" +
@@ -1377,42 +1569,51 @@ public sealed class MainForm : Form
 
                     case "device.info":
                     {
-                        var device = SelectedDevice();
+                        var device =
+                            SelectedDevice();
 
                         output.AppendText(
-                            device?.ToString() ??
-                            "No device"
+                            device?.ToString()
+                            ?? "No device"
                         );
 
-                        output.AppendText("\r\n");
+                        output.AppendText(
+                            "\r\n"
+                        );
 
                         break;
                     }
 
                     case "device.battery":
                     {
-                        var device = SelectedDevice();
+                        var device =
+                            SelectedDevice();
 
                         output.AppendText(
-                            device?.Battery ??
-                            "No device"
+                            device?.Battery
+                            ?? "No device"
                         );
 
-                        output.AppendText("\r\n");
+                        output.AppendText(
+                            "\r\n"
+                        );
 
                         break;
                     }
 
                     case "device.resolution":
                     {
-                        var device = SelectedDevice();
+                        var device =
+                            SelectedDevice();
 
                         output.AppendText(
-                            device?.Resolution ??
-                            "No device"
+                            device?.Resolution
+                            ?? "No device"
                         );
 
-                        output.AppendText("\r\n");
+                        output.AppendText(
+                            "\r\n"
+                        );
 
                         break;
                     }
@@ -1480,7 +1681,8 @@ public sealed class MainForm : Form
 
                     default:
                         output.AppendText(
-                            "Command rejected. Type help.\r\n"
+                            "Command rejected. " +
+                            "Type help.\r\n"
                         );
                         break;
                 }
@@ -1520,7 +1722,9 @@ public sealed class MainForm : Form
             _settings.DeveloperMode =
                 developer.Checked;
 
-            SettingsStore.Save(_settings);
+            SettingsStore.Save(
+                _settings
+            );
         };
 
         card.Controls.Add(developer);
@@ -1538,7 +1742,9 @@ public sealed class MainForm : Form
             _settings.AutoReconnect =
                 reconnect.Checked;
 
-            SettingsStore.Save(_settings);
+            SettingsStore.Save(
+                _settings
+            );
         };
 
         card.Controls.Add(reconnect);
@@ -1556,14 +1762,17 @@ public sealed class MainForm : Form
             _settings.ClipboardSync =
                 clipboard.Checked;
 
-            SettingsStore.Save(_settings);
+            SettingsStore.Save(
+                _settings
+            );
         };
 
         card.Controls.Add(clipboard);
 
         var notifications = new CheckBox
         {
-            Text = "Android notifications (best effort)",
+            Text =
+                "Android notifications (best effort)",
             Checked = _settings.Notifications,
             Location = new Point(18, 117),
             AutoSize = true
@@ -1574,7 +1783,9 @@ public sealed class MainForm : Form
             _settings.Notifications =
                 notifications.Checked;
 
-            SettingsStore.Save(_settings);
+            SettingsStore.Save(
+                _settings
+            );
         };
 
         card.Controls.Add(notifications);
@@ -1588,20 +1799,29 @@ public sealed class MainForm : Form
 
         backup.Click += (_, _) =>
         {
-            using var dialog = new SaveFileDialog
+            using var dialog =
+                new SaveFileDialog
+                {
+                    Filter = "JSON|*.json",
+                    FileName =
+                        "ryzoria-settings.json"
+                };
+
+            if (dialog.ShowDialog() !=
+                DialogResult.OK)
             {
-                Filter = "JSON|*.json",
-                FileName = "ryzoria-settings.json"
-            };
-
-            if (dialog.ShowDialog() != DialogResult.OK)
                 return;
+            }
 
-            File.Copy(
-                SettingsStore.SettingsFile,
-                dialog.FileName,
-                true
-            );
+            if (File.Exists(
+                    SettingsStore.SettingsFile))
+            {
+                File.Copy(
+                    SettingsStore.SettingsFile,
+                    dialog.FileName,
+                    true
+                );
+            }
         };
 
         card.Controls.Add(backup);
@@ -1615,13 +1835,17 @@ public sealed class MainForm : Form
 
         restore.Click += (_, _) =>
         {
-            using var dialog = new OpenFileDialog
-            {
-                Filter = "JSON|*.json"
-            };
+            using var dialog =
+                new OpenFileDialog
+                {
+                    Filter = "JSON|*.json"
+                };
 
-            if (dialog.ShowDialog() != DialogResult.OK)
+            if (dialog.ShowDialog() !=
+                DialogResult.OK)
+            {
                 return;
+            }
 
             File.Copy(
                 dialog.FileName,
@@ -1660,14 +1884,17 @@ public sealed class MainForm : Form
             235
         );
 
-        info.MaximumSize = new Size(740, 70);
+        info.MaximumSize =
+            new Size(740, 70);
 
         card.Controls.Add(info);
     }
 
     private void ShowAbout()
     {
-        ResetContent("About RyzoriaUI");
+        ResetContent(
+            "About RyzoriaUI"
+        );
 
         _content.Controls.Add(
             LabelText(
@@ -1730,7 +1957,8 @@ public sealed class MainForm : Form
             return;
         }
 
-        var value = query.Trim().ToLowerInvariant();
+        var value =
+            query.Trim().ToLowerInvariant();
 
         if (value.Contains("android") ||
             value.Contains("adb"))
@@ -1771,9 +1999,12 @@ public sealed class MainForm : Form
             return null;
 
         if (_deviceBox.SelectedIndex >= 0 &&
-            _deviceBox.SelectedIndex < _devices.Count)
+            _deviceBox.SelectedIndex <
+            _devices.Count)
         {
-            return _devices[_deviceBox.SelectedIndex];
+            return _devices[
+                _deviceBox.SelectedIndex
+            ];
         }
 
         return _devices.FirstOrDefault(
@@ -1802,10 +2033,14 @@ public sealed class MainForm : Form
             }
 
             if (_deviceBox.Items.Count > 0)
+            {
                 _deviceBox.SelectedIndex = 0;
+            }
 
             var authorized =
-                _devices.Any(x => x.Authorized);
+                _devices.Any(
+                    x => x.Authorized
+                );
 
             _deviceStatus.Text =
                 authorized
@@ -1838,7 +2073,8 @@ public sealed class MainForm : Form
     private async Task DeviceAction(
         Func<string, Task> action)
     {
-        var device = SelectedDevice();
+        var device =
+            SelectedDevice();
 
         if (device is null)
         {
@@ -1849,9 +2085,20 @@ public sealed class MainForm : Form
             return;
         }
 
+        if (!device.Authorized)
+        {
+            MessageBox.Show(
+                "Android device belum authorized."
+            );
+
+            return;
+        }
+
         try
         {
-            await action(device.Serial);
+            await action(
+                device.Serial
+            );
         }
         catch (Exception ex)
         {
@@ -1866,7 +2113,8 @@ public sealed class MainForm : Form
 
     private async Task StartMirror()
     {
-        var device = SelectedDevice();
+        var device =
+            SelectedDevice();
 
         if (device is null)
         {
@@ -1877,13 +2125,23 @@ public sealed class MainForm : Form
             return;
         }
 
-        var preset = new PerformancePreset(
-            "Current",
-            _settings.ScrcpyMaxSize,
-            _settings.ScrcpyMaxFps,
-            _settings.ScrcpyBitrateMbps,
-            _settings.NoAudio
-        );
+        if (!device.Authorized)
+        {
+            MessageBox.Show(
+                "Android device belum authorized."
+            );
+
+            return;
+        }
+
+        var preset =
+            new PerformancePreset(
+                "Current",
+                _settings.ScrcpyMaxSize,
+                _settings.ScrcpyMaxFps,
+                _settings.ScrcpyBitrateMbps,
+                _settings.NoAudio
+            );
 
         try
         {
@@ -1909,9 +2167,9 @@ public sealed class MainForm : Form
     private void ApplyPreset(string name)
     {
         if (!string.Equals(
-            name,
-            "Ultra Low",
-            StringComparison.OrdinalIgnoreCase))
+                name,
+                "Ultra Low",
+                StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -1924,7 +2182,9 @@ public sealed class MainForm : Form
         _settings.ScrcpyBitrateMbps = 2;
         _settings.NoAudio = true;
 
-        SettingsStore.Save(_settings);
+        SettingsStore.Save(
+            _settings
+        );
 
         MessageBox.Show(
             "Ultra Low mode enabled."
@@ -1933,7 +2193,8 @@ public sealed class MainForm : Form
 
     private async Task TakeScreenshot()
     {
-        var device = SelectedDevice();
+        var device =
+            SelectedDevice();
 
         if (device is null)
         {
@@ -1944,14 +2205,19 @@ public sealed class MainForm : Form
             return;
         }
 
-        using var dialog = new SaveFileDialog
-        {
-            Filter = "PNG|*.png",
-            FileName = "ryzoria-screenshot.png"
-        };
+        using var dialog =
+            new SaveFileDialog
+            {
+                Filter = "PNG|*.png",
+                FileName =
+                    "ryzoria-screenshot.png"
+            };
 
-        if (dialog.ShowDialog() != DialogResult.OK)
+        if (dialog.ShowDialog() !=
+            DialogResult.OK)
+        {
             return;
+        }
 
         try
         {
@@ -1994,23 +2260,46 @@ public sealed class MainForm : Form
                         var devices =
                             await _adb.GetDevicesAsync();
 
-                        if (IsDisposed)
-                            return;
-
-                        BeginInvoke(new Action(() =>
+                        if (IsDisposed ||
+                            !IsHandleCreated)
                         {
-                            _devices = devices;
+                            return;
+                        }
 
-                            if (_deviceBox.Items.Count !=
-                                _devices.Count)
+                        BeginInvoke(
+                            new Action(() =>
                             {
-                                _ = RefreshDevices();
-                            }
-                        }));
+                                if (IsDisposed)
+                                    return;
+
+                                _devices = devices;
+
+                                var authorized =
+                                    _devices.Any(
+                                        x => x.Authorized
+                                    );
+
+                                _deviceStatus.Text =
+                                    authorized
+                                        ? $"● Android: {_devices.Count(x => x.Authorized)} connected"
+                                        : "● Android: not connected";
+
+                                _deviceStatus.ForeColor =
+                                    authorized
+                                        ? Color.LightGreen
+                                        : Color.Gold;
+
+                                if (_deviceBox.Items.Count !=
+                                    _devices.Count)
+                                {
+                                    _ = RefreshDevices();
+                                }
+                            })
+                        );
                     }
                     catch
                     {
-                        // Ignore background polling failures.
+                        // Polling berjalan di background.
                     }
                 },
                 null,
@@ -2026,12 +2315,15 @@ public sealed class MainForm : Form
         using var form = new Form
         {
             Text = title,
-            StartPosition = FormStartPosition.CenterParent,
+            StartPosition =
+                FormStartPosition.CenterParent,
             Width = 360,
             Height = 150,
-            BackColor = Color.FromArgb(16, 23, 34),
+            BackColor =
+                Color.FromArgb(16, 23, 34),
             ForeColor = Color.White,
-            FormBorderStyle = FormBorderStyle.FixedDialog
+            FormBorderStyle =
+                FormBorderStyle.FixedDialog
         };
 
         var text = new TextBox
@@ -2040,7 +2332,8 @@ public sealed class MainForm : Form
             Top = 18,
             Width = 310,
             Text = defaultValue,
-            BackColor = Color.FromArgb(24, 31, 43),
+            BackColor =
+                Color.FromArgb(24, 31, 43),
             ForeColor = Color.White
         };
 
@@ -2050,7 +2343,8 @@ public sealed class MainForm : Form
             Left = 168,
             Top = 58,
             Width = 75,
-            DialogResult = DialogResult.OK
+            DialogResult =
+                DialogResult.OK
         };
 
         var cancel = new Button
@@ -2059,7 +2353,8 @@ public sealed class MainForm : Form
             Left = 251,
             Top = 58,
             Width = 75,
-            DialogResult = DialogResult.Cancel
+            DialogResult =
+                DialogResult.Cancel
         };
 
         form.Controls.AddRange(

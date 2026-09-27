@@ -45,4 +45,3 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: RyzoriaUI-Windows-x64
-          path: RyzoriaUI-Windows-x64.zip
